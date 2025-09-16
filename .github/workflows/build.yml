@@ -31,6 +31,11 @@ jobs:
         run: |
           git config --global user.name "BruceZhang1993"
           git config --global user.email "zttt183525594@gmail.com"
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: repo
       - name: Checkout kernel code
         uses: actions/checkout@v4
         with:
@@ -43,6 +48,11 @@ jobs:
           repository: osm0sis/AnyKernel3
           ref: master
           path: AnyKernel3
+      - name: Configure AnyKernel3
+        run: |
+          cd AnyKernel3
+          rm anykernel.sh
+          cp -f ../repo/anykernel.sh .
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
