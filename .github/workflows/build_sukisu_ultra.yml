@@ -31,8 +31,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update && sudo apt upgrade -y
-          sudo apt install -y python3 git curl
+          sudo apt-get update
+          sudo apt-get upgrade
+          sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
+          sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs
 
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1.2
