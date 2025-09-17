@@ -6,7 +6,7 @@ on:
         type: boolean
         description: "是否启用SUSFS"
         required: true
-        default: false
+        default: true
       KPM:
         type: boolean
         description: "是否启用KPM"
@@ -88,7 +88,7 @@ jobs:
         if: ${{ github.event.inputs.SUSFS == 'true' }}
         run: |
           cd kernel_workspace
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.9
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b master
           cd kernel_platform
           echo "正在给内核打susfs补丁"
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.9.patch ./
