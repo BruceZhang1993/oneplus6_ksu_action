@@ -4,11 +4,11 @@ FILES=("fs/Makefile" "fs/internal.h" "fs/namei.c" "fs/proc/base.c" "fs/proc/task
 
 URL="https://raw.githubusercontent.com/LineageOS/android_kernel_oneplus_sdm845/refs/heads/lineage-22.2"
 
-mkdir -p c/fs
-mkdir -p c/fs/proc
-mkdir -p c/kernel
-mkdir -p c/mm
+mkdir -p a/fs
+mkdir -p a/fs/proc
+mkdir -p a/kernel
+mkdir -p a/mm
 
 for item in "${FILES[@]}"; do
-    wget -O "c/$item" "$URL/$item"
+    wget -O "a/$item" "$URL/$item"
 done

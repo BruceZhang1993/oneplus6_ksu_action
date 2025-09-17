@@ -2,11 +2,6 @@ name: Build LineageOS Kernel with SukiSU Ultra
 on:
   workflow_dispatch:
     inputs:
-      SUSFS:
-        type: boolean
-        description: "是否启用SUSFS"
-        required: true
-        default: true
       KPM:
         type: boolean
         description: "是否启用KPM"
@@ -48,7 +43,6 @@ jobs:
 
       - name: Show selected inputs debug
         run: |
-          echo "Selected SUSFS: ${{ github.event.inputs.SUSFS }}"
           echo "Selected KPM: ${{ github.event.inputs.KPM }}"
 
       - name: Checkout main repository
@@ -93,25 +87,16 @@ jobs:
           echo "正在打隐藏应用补丁"
           patch -p1 -F 3 < 69_hide_stuff.patch
 
-      - name: Apply VFS
-        run: |
-          cd kernel_workspace/kernel_platform
-          cp ../../repo/syshook.patch ./
-          echo "正在打vfs补丁"
-          patch -p1 -F 3 < syshook.patch
-          echo "vfs_patch完成"
-
-      - name: Apply SUSFS Patches
-        if: ${{ github.event.inputs.SUSFS == 'true' }}
+      - name: Apply Patches
         run: |
           cd kernel_workspace
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b master
           cd kernel_platform
           echo "正在给内核打susfs补丁"
-          cp ../../repo/susfs.patch ./
+          cp ../../repo/all.patch ./
           cp ../susfs4ksu/kernel_patches/fs/* ./fs/
           cp ../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
-          patch -p1 < susfs.patch
+          patch -p1 < all.patch
           echo "完成"
 
       # 配置信息
@@ -128,7 +113,6 @@ jobs:
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> "$CONFIG_FILE"
 
           # SUSFS config
-          if [ "${{ github.event.inputs.SUSFS }}" = "true" ]; then
           echo "CONFIG_KSU_SUSFS=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$CONFIG_FILE"
@@ -144,7 +128,6 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
-          fi
 
       - name: Download clang
         run: |
