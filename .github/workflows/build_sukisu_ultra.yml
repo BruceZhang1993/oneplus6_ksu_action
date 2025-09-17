@@ -96,7 +96,7 @@ jobs:
           cp ../../repo/all.patch ./
           cp ../susfs4ksu/kernel_patches/fs/* ./fs/
           cp ../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
-          patch -p1 < all.patch
+          patch -p1 -F 5 < all.patch
           echo "完成"
 
       # 配置信息
