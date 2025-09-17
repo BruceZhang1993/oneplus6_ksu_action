@@ -1,4 +1,4 @@
-name: Build Lineage Kernel with KernelSU
+name: Build Lineage Kernel with KernelSU 0.9.5 (Legacy version)
 
 on:
   workflow_dispatch:
