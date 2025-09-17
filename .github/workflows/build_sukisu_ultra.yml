@@ -34,6 +34,11 @@ jobs:
           sudo apt update && sudo apt upgrade -y
           sudo apt install -y python3 git curl
 
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: 2G
+
       - name: Show selected inputs debug
         run: |
           echo "Selected SUSFS_CI: ${{ github.event.inputs.SUSFS_CI }}"
