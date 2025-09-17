@@ -84,19 +84,6 @@ jobs:
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
 
-      - name: Apply SUSFS Patches
-        if: ${{ github.event.inputs.SUSFS == 'true' }}
-        run: |
-          cd kernel_workspace
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b master
-          cd kernel_platform
-          echo "正在给内核打susfs补丁"
-          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.9.patch ./
-          cp ../susfs4ksu/kernel_patches/fs/* ./fs/
-          cp ../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
-          patch -p1 < 50_add_susfs_in_kernel-4.9.patch || true
-          echo "完成"
-
       - name: Apply Hide Stuff Patches
         run: |
           cd kernel_workspace
@@ -113,6 +100,19 @@ jobs:
           echo "正在打vfs补丁"
           patch -p1 -F 3 < syshook.patch
           echo "vfs_patch完成"
+
+      - name: Apply SUSFS Patches
+        if: ${{ github.event.inputs.SUSFS == 'true' }}
+        run: |
+          cd kernel_workspace
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b master
+          cd kernel_platform
+          echo "正在给内核打susfs补丁"
+          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.9.patch ./
+          cp ../susfs4ksu/kernel_patches/fs/* ./fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
+          patch -p1 < 50_add_susfs_in_kernel-4.9.patch
+          echo "完成"
 
       # 配置信息
       - name: Add Configuration Settings
