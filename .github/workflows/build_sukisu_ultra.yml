@@ -96,9 +96,9 @@ jobs:
       - name: Apply VFS
         run: |
           cd kernel_workspace/kernel_platform
-          cp ../SukiSU_patch/4.9/4.9_syscall_hooks.patch ./
+          cp ../../repo/syscall_hook.patch ./
           echo "正在打vfs补丁"
-          patch -p1 -F 3 < 4.9_syscall_hooks.patch
+          patch -p1 -F 3 < syscall_hook.patch
           echo "vfs_patch完成"
 
       # 配置信息
