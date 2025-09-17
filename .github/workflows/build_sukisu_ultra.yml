@@ -2,9 +2,14 @@ name: Build LineageOS Kernel with SukiSU Ultra
 on:
   workflow_dispatch:
     inputs:
+      SUSFS:
+        type: boolean
+        description: "是否启用SUSFS"
+        required: true
+        default: false
       KPM:
         type: boolean
-        description: "是否启用KPM？"
+        description: "是否启用KPM"
         required: true
         default: true
 
@@ -43,8 +48,7 @@ jobs:
 
       - name: Show selected inputs debug
         run: |
-          echo "Selected SUSFS_CI: ${{ github.event.inputs.SUSFS_CI }}"
-          echo "Selected ZRAM: ${{ github.event.inputs.ZRAM }}"
+          echo "Selected SUSFS: ${{ github.event.inputs.SUSFS }}"
           echo "Selected KPM: ${{ github.event.inputs.KPM }}"
 
       - name: Checkout main repository
@@ -70,7 +74,8 @@ jobs:
           git commit -m "Force remove -dirty suffix from kernel version"
 
       # 添加 SukiSU Ultra
-      - name: Add KernelSU-SukiSU Ultra
+      - name: Add KernelSU-SukiSU Ultra (SUSFS)
+        if: ${{ github.event.inputs.SUSFS == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
@@ -80,11 +85,22 @@ jobs:
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
 
-      - name: Apply Patches SukiSU Ultra
+      - name: Add KernelSU-SukiSU Ultra (NON-GKI)
+        if: ${{ github.event.inputs.SUSFS == 'false' }}
+        run: |
+          cd kernel_workspace/kernel_platform
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+          cd ./KernelSU
+          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
+          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+          export KSU_VERSION=$KSU_VERSION
+          sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+
+      - name: Apply SUSFS Patches
+        if: ${{ github.event.inputs.SUSFS == 'true' }}
         run: |
           cd kernel_workspace
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.9
-          git clone https://github.com/ShirkNeko/SukiSU_patch.git
           cd kernel_platform
           echo "正在给内核打susfs补丁"
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.9.patch ./
@@ -95,7 +111,9 @@ jobs:
 
       - name: Apply Hide Stuff Patches
         run: |
-          cd kernel_workspace/kernel_platform
+          cd kernel_workspace
+          git clone https://github.com/ShirkNeko/SukiSU_patch.git
+          cd kernel_platform
           cp ../SukiSU_patch/69_hide_stuff.patch ./
           echo "正在打隐藏应用补丁"
           patch -p1 -F 3 < 69_hide_stuff.patch
@@ -122,6 +140,7 @@ jobs:
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> "$CONFIG_FILE"
 
           # SUSFS config
+          if [ "${{ github.event.inputs.SUSFS }}" = "true" ]; then
           echo "CONFIG_KSU_SUSFS=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$CONFIG_FILE"
@@ -137,6 +156,7 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
+          fi
 
       - name: Download clang
         run: |
