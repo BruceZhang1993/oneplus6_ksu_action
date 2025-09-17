@@ -32,7 +32,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get upgrade
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
           sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs
 
@@ -94,7 +93,7 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform
           echo "正在给KSU打susfs补丁"
-          cp ../susfs4ksu/KernelSU/10_enable_susfs_for_ksu.patch ./
+          cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
           patch -p1 -F 3 < 10_enable_susfs_for_ksu.patch
           echo "完成"
 
