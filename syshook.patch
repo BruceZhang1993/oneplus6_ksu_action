@@ -48,7 +48,7 @@ diff '--color=auto' -ruN a/fs/devpts/inode.c b/fs/devpts/inode.c
  	return dentry->d_fsdata;
 diff '--color=auto' -ruN a/fs/exec.c b/fs/exec.c
 --- a/fs/exec.c	2025-09-17 11:28:19.739720784 +0800
-+++ b/fs/exec.c	2025-09-17 11:41:12.613315307 +0800
++++ b/fs/exec.c	2025-09-17 13:44:47.675519187 +0800
 @@ -1673,6 +1673,14 @@
  	return ret;
  }
@@ -64,19 +64,20 @@ diff '--color=auto' -ruN a/fs/exec.c b/fs/exec.c
  /*
   * sys_execve() executes a new program.
   */
-@@ -1681,6 +1689,12 @@
- 			      struct user_arg_ptr envp,
- 			      int flags)
- {
+@@ -1687,6 +1695,13 @@
+ 	struct files_struct *displaced;
+ 	int retval;
+ 
 +	#ifdef CONFIG_KSU
 +	if (unlikely(ksu_execveat_hook))
 +		ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
 +	else
 +		ksu_handle_execveat_sucompat(&fd, &filename, &argv, &envp, &flags);
 +    #endif
- 	char *pathbuf = NULL;
- 	struct linux_binprm *bprm;
- 	struct file *file;
++
+ 	if (IS_ERR(filename))
+ 		return PTR_ERR(filename);
+ 
 diff '--color=auto' -ruN a/fs/namespace.c b/fs/namespace.c
 --- a/fs/namespace.c	2025-09-17 11:57:12.891176951 +0800
 +++ b/fs/namespace.c	2025-09-17 11:58:39.441734414 +0800
