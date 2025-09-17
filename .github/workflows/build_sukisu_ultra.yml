@@ -90,6 +90,14 @@ jobs:
           patch -p1 -F 3 < all.patch
           echo "完成"
 
+      - name: Apply KernelSU Patches
+        run: |
+          cd kernel_workspace/kernel_platform
+          echo "正在给KSU打susfs补丁"
+          cp ../susfs4ksu/KernelSU/10_enable_susfs_for_ksu.patch ./
+          patch -p1 -F 3 < 10_enable_susfs_for_ksu.patch
+          echo "完成"
+
       - name: Apply Hide Stuff Patches
         run: |
           cd kernel_workspace
