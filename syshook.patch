@@ -1,0 +1,200 @@
+diff '--color=auto' -ruN a/drivers/input/input.c b/drivers/input/input.c
+--- a/drivers/input/input.c	2025-09-17 11:35:17.021993411 +0800
++++ b/drivers/input/input.c	2025-09-17 11:53:47.433489475 +0800
+@@ -377,10 +377,20 @@
+ 	return disposition;
+ }
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_input_hook __read_mostly;
++extern int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code, int *value);
++#endif
++
+ static void input_handle_event(struct input_dev *dev,
+ 			       unsigned int type, unsigned int code, int value)
+ {
+ 	int disposition = input_get_disposition(dev, type, code, &value);
++	
++	#ifdef CONFIG_KSU
++	if (unlikely(ksu_input_hook))
++		ksu_handle_input_handle_event(&type, &code, &value);
++	#endif
+ 
+ 	if (disposition != INPUT_IGNORE_EVENT && type != EV_SYN)
+ 		add_input_randomness(type, code, value);
+diff '--color=auto' -ruN a/fs/devpts/inode.c b/fs/devpts/inode.c
+--- a/fs/devpts/inode.c	2025-09-17 11:54:46.994171198 +0800
++++ b/fs/devpts/inode.c	2025-09-17 11:56:16.214297774 +0800
+@@ -559,6 +559,10 @@
+ 	return dentry;
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_devpts(struct inode*);
++#endif
++
+ /**
+  * devpts_get_priv -- get private data for a slave
+  * @pts_inode: inode of the slave
+@@ -567,6 +571,9 @@
+  */
+ void *devpts_get_priv(struct dentry *dentry)
+ {
++	#ifdef CONFIG_KSU
++    ksu_handle_devpts(dentry->d_inode);
++    #endif
+ 	if (dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC)
+ 		return NULL;
+ 	return dentry->d_fsdata;
+diff '--color=auto' -ruN a/fs/exec.c b/fs/exec.c
+--- a/fs/exec.c	2025-09-17 11:28:19.739720784 +0800
++++ b/fs/exec.c	2025-09-17 13:44:47.675519187 +0800
+@@ -1673,6 +1673,14 @@
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_execveat_hook __read_mostly;
++extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
++			void *envp, int *flags);
++extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
++				 void *argv, void *envp, int *flags);
++#endif
++
+ /*
+  * sys_execve() executes a new program.
+  */
+@@ -1687,6 +1695,13 @@
+ 	struct files_struct *displaced;
+ 	int retval;
+ 
++	#ifdef CONFIG_KSU
++	if (unlikely(ksu_execveat_hook))
++		ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
++	else
++		ksu_handle_execveat_sucompat(&fd, &filename, &argv, &envp, &flags);
++    #endif
++
+ 	if (IS_ERR(filename))
+ 		return PTR_ERR(filename);
+ 
+diff '--color=auto' -ruN a/fs/namespace.c b/fs/namespace.c
+--- a/fs/namespace.c	2025-09-17 11:57:12.891176951 +0800
++++ b/fs/namespace.c	2025-09-17 11:58:39.441734414 +0800
+@@ -1711,6 +1711,40 @@
+ }
+ #endif
+ 
++static int can_umount(const struct path *path, int flags)
++{
++	struct mount *mnt = real_mount(path->mnt);
++
++	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
++		return -EINVAL;
++	if (!may_mount())
++		return -EPERM;
++	if (path->dentry != path->mnt->mnt_root)
++		return -EINVAL;
++	if (!check_mnt(mnt))
++		return -EINVAL;
++	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
++		return -EINVAL;
++	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
++		return -EPERM;
++	return 0;
++}
++
++int path_umount(struct path *path, int flags)
++{
++	struct mount *mnt = real_mount(path->mnt);
++	int ret;
++
++	ret = can_umount(path, flags);
++	if (!ret)
++		ret = do_umount(mnt, flags);
++
++	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
++	dput(path->dentry);
++	mntput_no_expire(mnt);
++	return ret;
++}
++
+ /*
+  * Now umount can handle mount points as well as block devices.
+  * This is important for filesystems which use unnamed block devices.
+diff '--color=auto' -ruN a/fs/open.c b/fs/open.c
+--- a/fs/open.c	2025-09-17 11:28:20.535931397 +0800
++++ b/fs/open.c	2025-09-17 11:41:26.590485187 +0800
+@@ -355,6 +355,11 @@
+ 	return error;
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
++			 int *flags);
++#endif
++
+ /*
+  * access() needs to use the real uid/gid, not the effective uid/gid.
+  * We do this by temporarily clearing all FS-related capabilities and
+@@ -370,6 +375,10 @@
+ 	int res;
+ 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+ 
++	#ifdef CONFIG_KSU
++	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
++	#endif
++
+ 	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
+ 		return -EINVAL;
+ 
+diff '--color=auto' -ruN a/fs/read_write.c b/fs/read_write.c
+--- a/fs/read_write.c	2025-09-17 11:28:21.376660152 +0800
++++ b/fs/read_write.c	2025-09-17 11:42:33.032292728 +0800
+@@ -456,10 +456,21 @@
+ }
+ EXPORT_SYMBOL(__vfs_read);
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_vfs_read_hook __read_mostly;
++extern int ksu_handle_vfs_read(struct file **file_ptr, char __user **buf_ptr,
++			size_t *count_ptr, loff_t **pos);
++#endif
++
+ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+ {
+ 	ssize_t ret;
+ 
++	#ifdef CONFIG_KSU 
++	if (unlikely(ksu_vfs_read_hook))
++		ksu_handle_vfs_read(&file, &buf, &count, &pos);
++	#endif
++
+ 	if (!(file->f_mode & FMODE_READ))
+ 		return -EBADF;
+ 	if (!(file->f_mode & FMODE_CAN_READ))
+diff '--color=auto' -ruN a/fs/stat.c b/fs/stat.c
+--- a/fs/stat.c	2025-09-17 11:28:22.214367637 +0800
++++ b/fs/stat.c	2025-09-17 11:50:37.576181928 +0800
+@@ -141,6 +141,10 @@
+ }
+ EXPORT_SYMBOL(vfs_statx_fd);
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
++#endif
++
+ /**
+  * vfs_statx - Get basic and extra attributes by filename
+  * @dfd: A file descriptor representing the base dir for a relative filename
+@@ -166,6 +170,10 @@
+ 	int error = -EINVAL;
+ 	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
+ 
++	#ifdef CONFIG_KSU
++	ksu_handle_stat(&dfd, &filename, &flags);
++	#endif
++
+ 	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
+ 		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
+ 		return -EINVAL;

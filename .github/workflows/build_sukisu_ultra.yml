@@ -13,41 +13,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configure Git
+      - name: 配置 Git
         run: |
           git config --global user.name "Bruce Zhang"
           git config --global user.email "zttt183525594@gmail.com"
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           sudo apt-get update
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
           sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs
 
-      - name: Set up ccache
+      - name: 设置 ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           max-size: 2G
 
-      - name: Show selected inputs debug
+      - name: 显示输入参数
         run: |
           echo "Selected KPM: ${{ github.event.inputs.KPM }}"
 
-      - name: Checkout main repository
+      - name: 拉取仓库
         uses: actions/checkout@v4
         with:
           ref: master
           path: repo
 
-      - name: Checkout kernel code
+      - name: 拉取内核源码
         uses: actions/checkout@v4
         with:
           repository: LineageOS/android_kernel_oneplus_sdm845
           ref: lineage-22.2
           path: kernel_workspace/kernel_platform
 
-      # 删除 -dirty 后缀
-      - name: Force remove -dirty suffix
+      - name: 删除内核 -dirty 后缀
         run: |
           cd kernel_workspace/kernel_platform
           sed -i 's/ -dirty//g' scripts/setlocalversion
@@ -55,8 +54,7 @@ jobs:
           git add -A
           git commit -m "Force remove -dirty suffix from kernel version"
 
-      # 添加 SukiSU Ultra
-      - name: Add KernelSU-SukiSU Ultra
+      - name: 添加 SukiSU Ultra
         run: |
           cd kernel_workspace/kernel_platform
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
@@ -66,27 +64,26 @@ jobs:
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
 
-      - name: Apply Patches
+      - name: 应用内核补丁
+        run: |
+          cd kernel_workspace/kernel_platform
+          patch -p1 -F 3 < ../../repo/syshook.patch
+
+      - name: 应用 SUSFS 补丁
         run: |
           cd kernel_workspace
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b master
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b 1.4.2-kernel-4.9
           cd kernel_platform
-          echo "正在给内核打susfs补丁"
-          cp ../../repo/all.patch ./
-          cp ../susfs4ksu/kernel_patches/fs/* ./fs/
-          cp ../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
-          patch -p1 -F 3 < all.patch
+          echo "== 正在应用 SUSFS 补丁 =="
+          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.9.patch .
+          cp ../susfs4ksu/kernel_patches/fs/susfs.c ./fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./include/linux/
+          cp ../susfs4ksu/kernel_patches/fs/sus_su.c ./fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/sus_su.h ./include/linux/
+          patch -p1 -F 3 < 50_add_susfs_in_kernel-4.9.patch
           echo "完成"
 
-      - name: Apply KernelSU Patches
-        run: |
-          cd kernel_workspace/kernel_platform/KernelSU
-          echo "正在给KSU打susfs补丁"
-          cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
-          patch -p1 -F 3 < 10_enable_susfs_for_ksu.patch
-          echo "完成"
-
-      - name: Apply Hide Stuff Patches
+      - name: 应用隐藏应用补丁
         run: |
           cd kernel_workspace
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
@@ -96,7 +93,7 @@ jobs:
           patch -p1 -F 3 < 69_hide_stuff.patch
 
       # 配置信息
-      - name: Add Configuration Settings
+      - name: 增加内核配置
         run: |
           cd kernel_workspace/kernel_platform
           CONFIG_FILE=./arch/arm64/configs/enchilada_defconfig
@@ -120,16 +117,17 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SUS_MOUNT=n" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n" >> "$CONFIG_FILE"
+          echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> "$CONFIG_FILE"
 
-      - name: Download clang
+      - name: 下载 clang 编译器
         run: |
           wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
           tar xf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
-      - name: Build Kernel With KernelSU
+
+      - name: 构建内核
         run: |
           export PATH=$(pwd)/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/:$PATH
           cd kernel_workspace/kernel_platform
@@ -140,14 +138,14 @@ jobs:
           ARCH: arm64
           SUBARCH: arm64
 
-      - name: Checkout AnyKernel3 code
+      - name: 下载 AnyKernel3 模板
         uses: actions/checkout@v4
         with:
           repository: osm0sis/AnyKernel3
           ref: master
           path: AnyKernel3
 
-      - name: Apply patch_linux and replace Image
+      - name: 应用 KPM 补丁
         if: ${{ github.event.inputs.KPM == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform
@@ -158,13 +156,13 @@ jobs:
           mv out/arch/arm64/boot/Image.gz-dtb Image.gz-dtb
           cp Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
 
-      - name: Configure AnyKernel3
+      - name: 配置 AnyKernel3
         run: |
           cd AnyKernel3
           rm anykernel.sh
           cp -f ../repo/anykernel.sh .
 
-      - name: Upload AnyKernel3
+      - name: 上传内核包
         uses: actions/upload-artifact@v4
         with:
           name: AnyKernel3_Lineage_OnePlus6_SukiSU
