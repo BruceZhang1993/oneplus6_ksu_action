@@ -68,7 +68,7 @@ jobs:
       - name: 应用内核补丁
         run: |
           cd kernel_workspace/kernel_platform
-          patch -p1 -F 3 < ../../repo/syshook.patch
+          patch -p1 < ../../repo/syshook.patch
 
       - name: 应用 SUSFS 补丁
         run: |
@@ -81,8 +81,7 @@ jobs:
           cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./include/linux/
           cp ../susfs4ksu/kernel_patches/fs/sus_su.c ./fs/
           cp ../susfs4ksu/kernel_patches/include/linux/sus_su.h ./include/linux/
-          patch -p1 -F 3 < 50_add_susfs_in_kernel-4.9.patch
-          patch -p1 -F 3 < ../../repo/susfs-after.patch
+          patch -p1 < ../../repo/susfs.patch
           echo "完成"
 
       - name: 应用隐藏应用补丁
