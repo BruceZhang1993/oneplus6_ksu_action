@@ -21,6 +21,7 @@ jobs:
       - name: 安装依赖
         run: |
           sudo apt-get update
+          sudo apt-get upgrade
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
           sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs
 
