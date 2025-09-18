@@ -73,17 +73,18 @@ jobs:
       - name: 应用 SUSFS 补丁
         run: |
           cd kernel_workspace
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b 1.4.2-kernel-4.9
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.9
           cd kernel_platform
           echo "== 正在应用 SUSFS 补丁 =="
-          # cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.9.patch .
           cp ../susfs4ksu/kernel_patches/fs/susfs.c ./fs/
           cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./include/linux/
+          cp ../susfs4ksu/kernel_patches/include/linux/susfs_def.h ./include/linux/
           cp ../susfs4ksu/kernel_patches/fs/sus_su.c ./fs/
           cp ../susfs4ksu/kernel_patches/include/linux/sus_su.h ./include/linux/
           # patch -p1 < ../../repo/susfs.patch
           cd KernelSU
-          cp ../../susfs4ksu/kernel_patches/KernelSU/kernel/sucompat.h ./kernel/
+          cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch .
+          patch -p1 < 10_enable_susfs_for_ksu.patch
           echo "完成"
 
       - name: 应用隐藏应用补丁
