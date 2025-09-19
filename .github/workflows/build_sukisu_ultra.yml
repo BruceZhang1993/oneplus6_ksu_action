@@ -1,12 +1,6 @@
 name: Build LineageOS Kernel with SukiSU Ultra
 on:
   workflow_dispatch:
-    inputs:
-      KPM:
-        type: boolean
-        description: "是否启用KPM"
-        required: true
-        default: true
 
 jobs:
   build:
@@ -29,10 +23,6 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           max-size: 2G
-
-      - name: 显示输入参数
-        run: |
-          echo "Selected KPM: ${{ github.event.inputs.KPM }}"
 
       - name: 拉取仓库
         uses: actions/checkout@v4
@@ -109,7 +99,7 @@ jobs:
 
           # SukiSU Ultra config
           echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
+          echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> "$CONFIG_FILE"
 
@@ -153,14 +143,8 @@ jobs:
           ref: master
           path: AnyKernel3
 
-      - name: 应用 KPM 补丁
-        if: ${{ github.event.inputs.KPM == 'true' }}
+      - name: 写入内核
         run: |
-          cd kernel_workspace/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch_linux
-          chmod +x patch_linux
-          ./patch_linux
-          rm -f Image.gz-dtb
           mv out/arch/arm64/boot/Image.gz-dtb Image.gz-dtb
           cp Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
 
