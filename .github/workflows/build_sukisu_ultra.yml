@@ -145,6 +145,7 @@ jobs:
 
       - name: 写入内核
         run: |
+          cd kernel_workspace/kernel_platform
           mv out/arch/arm64/boot/Image.gz-dtb Image.gz-dtb
           cp Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
 
