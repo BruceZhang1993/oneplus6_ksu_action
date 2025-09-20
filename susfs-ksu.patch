@@ -236,7 +236,7 @@ diff --git a/kernel/apk_sign.c b/kernel/apk_sign.c
 index fd272828..2572f5a1 100644
 --- a/kernel/apk_sign.c
 +++ b/kernel/apk_sign.c
-@@ -420,8 +420,12 @@ module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
+@@ -420,8 +420,13 @@ module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
  
  #endif
  
@@ -248,8 +248,9 @@ index fd272828..2572f5a1 100644
 +		check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
 +#else
      return check_v2_signature(path, false, NULL);
++#endif
  }
- 
+
 diff --git a/kernel/apk_sign.h b/kernel/apk_sign.h
 index 64953946..2531b315 100644
 --- a/kernel/apk_sign.h
