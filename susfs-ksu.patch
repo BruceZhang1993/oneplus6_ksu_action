@@ -150,10 +150,10 @@ index 3c44b51f..ae1c0492 100644
 +
  endmenu
 diff --git a/kernel/Makefile b/kernel/Makefile
-index e8093d91..21871859 100644
+index e8093d91..736bbf23 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
-@@ -162,4 +162,71 @@ endif
+@@ -162,4 +162,72 @@ endif
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
  
@@ -170,6 +170,7 @@ index e8093d91..21871859 100644
 +	return cred;\n\
 +}\n
 +$(shell sed -i '/^static inline void put_cred/i $(GET_CRED_RCU)' $(srctree)/include/linux/cred.h;)
++endif
 +
 +ifneq ($(shell grep -Eq "^static int can_umount" $(srctree)/fs/namespace.c; echo $$?),0)
 +$(info -- KSU_SUSFS: adding function 'static int can_umount(const struct path *path, int flags);' to $(srctree)/fs/namespace.c)
