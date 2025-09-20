@@ -1031,10 +1031,15 @@ index 57f43418..84458df2 100644
  	return unlikely(ksu_is_any_manager(current_uid().val) || 
  			(ksu_manager_uid != KSU_INVALID_UID && ksu_manager_uid == current_uid().val));
 diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
-index 79087be1..82c990f5 100644
+index 79087be1..dfff51c1 100644
 --- a/kernel/selinux/rules.c
 +++ b/kernel/selinux/rules.c
-@@ -41,7 +41,7 @@ void apply_kernelsu_rules(void)
+@@ -37,11 +37,11 @@ static struct policydb *get_policydb(void)
+ }
+ 
+ static DEFINE_MUTEX(ksu_rules);
+-void apply_kernelsu_rules(void)
++void ksu_apply_kernelsu_rules()
  {
  	struct policydb *db;
  
@@ -1207,7 +1212,7 @@ index 4aa92d14..27cbe422 100644
  
  u32 ksu_get_devpts_sid(void)
 diff --git a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
-index 019204b4..5efe3754 100644
+index 019204b4..f7b9b3e0 100644
 --- a/kernel/selinux/selinux.h
 +++ b/kernel/selinux/selinux.h
 @@ -9,18 +9,30 @@
@@ -1230,7 +1235,7 @@ index 019204b4..5efe3754 100644
 +bool ksu_is_zygote(void *cred);
  
 -void apply_kernelsu_rules(void);
-+void ksu_apply_kernelsu_rules(void);
++void ksu_apply_kernelsu_rules();
  
  u32 ksu_get_devpts_sid(void);
  
@@ -1285,7 +1290,7 @@ index 59b1bc50..a0eb34f5 100644
 +
 +
 diff --git a/kernel/throne_tracker.c b/kernel/throne_tracker.c
-index 8ad52a29..1fe5f90b 100644
+index 8ad52a29..f7fe4eb4 100644
 --- a/kernel/throne_tracker.c
 +++ b/kernel/throne_tracker.c
 @@ -469,7 +469,7 @@ FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name,
@@ -1297,8 +1302,17 @@ index 8ad52a29..1fe5f90b 100644
  				crown_manager(dirpath, my_ctx->private_data, 0);
  				*my_ctx->stop = 1;
  
+@@ -598,7 +598,7 @@ static bool is_uid_exist(uid_t uid, char *package, void *data)
+ 	return exist;
+ }
+ 
+-void track_throne(void)
++void ksu_track_throne()
+ {
+ 	struct list_head uid_list;
+ 	INIT_LIST_HEAD(&uid_list);
 diff --git a/kernel/throne_tracker.h b/kernel/throne_tracker.h
-index 7799a823..75c4d02d 100644
+index 7799a823..f2db91ba 100644
 --- a/kernel/throne_tracker.h
 +++ b/kernel/throne_tracker.h
 @@ -5,6 +5,6 @@ void ksu_throne_tracker_init(void);
@@ -1306,6 +1320,6 @@ index 7799a823..75c4d02d 100644
  void ksu_throne_tracker_exit(void);
  
 -void track_throne(void);
-+void ksu_track_throne(void);
++void ksu_track_throne();
  
  #endif
