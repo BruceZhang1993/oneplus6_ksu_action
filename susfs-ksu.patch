@@ -276,7 +276,7 @@ index 16e4eef5..91980d0e 100644
  	return ksu_queue_work(&ksu_save_work);
  }
 diff --git a/kernel/apk_sign.c b/kernel/apk_sign.c
-index 64735137..082ad077 100644
+index 64735137..07a05e7a 100644
 --- a/kernel/apk_sign.c
 +++ b/kernel/apk_sign.c
 @@ -30,9 +30,6 @@ static struct apk_sign_key {
@@ -289,22 +289,15 @@ index 64735137..082ad077 100644
  };
  
  static struct sdesc *init_sdesc(struct crypto_shash *alg)
-@@ -418,9 +415,14 @@ module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
+@@ -418,7 +415,7 @@ module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
  
  #endif
  
 -bool is_manager_apk(char *path)
 +bool ksu_is_manager_apk(char *path)
  {
-+#ifdef CONFIG_KSU_SUSFS
-+	return (check_v2_signature(path, EXPECTED_SIZE_SHIRKNEKO, EXPECTED_HASH_SHIRKNEKO) ||
-+		check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
-+#else
  	return check_v2_signature(path, false, NULL);
-+#endif
  }
- 
- bool is_dynamic_manager_apk(char *path, int *signature_index)
 diff --git a/kernel/apk_sign.h b/kernel/apk_sign.h
 index 06c44616..0403954c 100644
 --- a/kernel/apk_sign.h
