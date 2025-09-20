@@ -836,7 +836,7 @@ index 18d139d2f..9e3cc2c1a 100644
 +	ovl_path_lowerdata(dentry, &realpath);
 +	if (likely(realpath.mnt && realpath.dentry)) {
 +		old_cred = ovl_override_creds(dentry->d_sb);
-+		err = vfs_getattr(&realpath, stat);
++		err = vfs_getattr(&realpath, stat, request_mask, flags);
 +		ovl_revert_creds(old_cred);
 +		return err;
 +	}
