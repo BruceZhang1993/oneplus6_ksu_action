@@ -14,10 +14,10 @@
 
 - [x] SukiSU Ultra NON-GKI 最新
 - [x] SuSFS 1.5.5 (kernel-4.9) 开启全部特性支持
-- [] KPM 支持
+- [ ] KPM 支持
 
 ### 杂项
 
 - [x] 移除内核版本号 -dirty 后缀
 - [x] 增加应用隐藏补丁
-- [] 增加 zram 算法补丁
+- [ ] 增加 zram 算法补丁
