@@ -900,6 +900,19 @@ index 955a71bc..16ec980e 100644
  	return 0;
  }
  
+diff --git a/kernel/kpm/compact.c b/kernel/kpm/compact.c
+index 6c3cbb77..35598627 100644
+--- a/kernel/kpm/compact.c
++++ b/kernel/kpm/compact.c
+@@ -52,7 +52,7 @@ static int sukisu_is_uid_should_umount(uid_t uid)
+ 
+ static int sukisu_is_current_uid_manager()
+ {
+-	return is_manager();
++	return ksu_is_manager();
+ }
+ 
+ static uid_t sukisu_get_manager_uid()
 diff --git a/kernel/ksu.c b/kernel/ksu.c
 index 90deecb0..0411e132 100644
 --- a/kernel/ksu.c
