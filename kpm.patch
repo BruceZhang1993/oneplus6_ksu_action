@@ -1,0 +1,14 @@
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 768183eec..95aac9211 100755
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2207,6 +2207,9 @@ struct task_struct {
+ 	u64 susfs_last_fake_mnt_id;
+ #endif
+ 	struct thread_struct thread;
++#ifdef CONFIG_SECURITY
++	void				*security;
++#endif
+ /*
+  * WARNING: on x86, 'thread_struct' contains a variable-sized
+  * structure.  It *MUST* be at the end of 'task_struct'.
