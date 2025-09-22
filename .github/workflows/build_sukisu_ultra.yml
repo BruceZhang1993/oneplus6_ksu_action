@@ -1,6 +1,12 @@
 name: Build LineageOS Kernel with SukiSU Ultra
 on:
   workflow_dispatch:
+    inputs:
+      KPM:
+        description: 'Enable KPM'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -17,7 +23,7 @@ jobs:
           sudo apt-get update
           sudo apt-get upgrade
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
-          sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs
+          sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs wget
 
       - name: 设置 ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -75,6 +81,11 @@ jobs:
           patch -p1 < ../../repo/susfs-kernel.patch
           echo "完成"
 
+      - name: 应用 KPM 补丁
+        if: ${{ github.event.inputs.KPM == 'true' }}
+        run: |
+          cd kernel_workspace/kernel_platform/include/linux
+          wget 'https://raw.githubusercontent.com/OnePlusOSS/android_kernel_oneplus_sm8150/refs/heads/oneplus/SM8150_P_9.0/include/linux/set_memory.h'
 
       - name: 应用 SukiSU 修补
         run: |
@@ -101,7 +112,11 @@ jobs:
 
           # SukiSU Ultra config
           echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
+          if [ "${{ github.event.inputs.KPM }}" = "true" ]; then
+            echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
+          else
+            echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
+          fi
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> "$CONFIG_FILE"
 
@@ -149,11 +164,21 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform
           mv out/arch/arm64/boot/Image.gz-dtb Image.gz-dtb
-          cp Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
+
+      - name: 应用 KPM
+        if: ${{ github.event.inputs.KPM == 'true' }}
+        run: |
+          cd kernel_workspace/kernel_platform
+          curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch_linux
+          chmod +x patch_linux
+          ./patch_linux
+          rm -f Image.gz-dtb
+          mv oImage Image.gz-dtb
 
       - name: 配置 AnyKernel3
         run: |
-          cd AnyKernel3
+          cp /kernel_workspace/kernel_platform/Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
+          cd $GITHUB_WORKSPACE/AnyKernel3
           rm anykernel.sh
           cp -f ../repo/anykernel.sh .
 
