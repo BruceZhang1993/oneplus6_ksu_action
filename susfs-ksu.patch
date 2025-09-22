@@ -333,7 +333,7 @@ index 955a71bc..16ec980e 100644
 +#ifdef CONFIG_KSU_SUSFS
 +bool susfs_is_allow_su(void)
 +{
-+	if (is_manager()) {
++	if (ksu_is_manager()) {
 +		// we are manager, allow!
 +		return true;
 +	}
@@ -402,6 +402,15 @@ index 955a71bc..16ec980e 100644
  
  // sucompat.c
  static bool ksu_su_compat_enabled = true;
+@@ -66,7 +134,7 @@ extern void ksu_sucompat_exit(void);
+ 
+ static inline bool is_allow_su(void)
+ {
+-	if (is_manager()) {
++	if (ksu_is_manager()) {
+ 		// we are manager, allow!
+ 		return true;
+ 	}
 @@ -154,7 +222,7 @@ static void disable_seccomp(struct task_struct *tsk)
  #endif
  }
@@ -429,6 +438,15 @@ index 955a71bc..16ec980e 100644
  	
  	// Also request userspace scan for next time
  	ksu_request_userspace_scan();
+@@ -297,7 +365,7 @@ int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
+ 	}
+ 
+ 	bool from_root = 0 == current_uid().val;
+-	bool from_manager = is_manager();
++	bool from_manager = ksu_is_manager();
+ 
+ 	if (!from_root && !from_manager) {
+ 		// only root or manager can access this interface
 @@ -321,7 +389,7 @@ int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
  	if (arg2 == CMD_GRANT_ROOT) {
  		if (is_allow_su()) {
@@ -999,6 +1017,19 @@ index cc2df243..26974c9c 100644
  
  bool ksu_is_safe_mode(void);
  
+diff --git a/kernel/manager.h b/kernel/manager.h
+index 57f43418..84458df2 100644
+--- a/kernel/manager.h
++++ b/kernel/manager.h
+@@ -18,7 +18,7 @@ static inline bool ksu_is_manager_uid_valid(void)
+ 	return ksu_manager_uid != KSU_INVALID_UID;
+ }
+ 
+-static inline bool is_manager(void)
++static inline bool ksu_is_manager(void)
+ {
+ 	return unlikely(ksu_is_any_manager(current_uid().val) || 
+ 			(ksu_manager_uid != KSU_INVALID_UID && ksu_manager_uid == current_uid().val));
 diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
 index 79087be1..dfff51c1 100644
 --- a/kernel/selinux/rules.c
