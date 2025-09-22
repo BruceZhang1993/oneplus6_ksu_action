@@ -87,7 +87,6 @@ jobs:
           cd kernel_workspace/kernel_platform
           wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/include/linux/set_memory.h' -O include/linux/set_memory.h
           wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/arch/arm/include/asm/set_memory.h' -O arch/arm/include/asm/set_memory.h
-          wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/arch/s390/include/asm/set_memory.h,' -O arch/s390/include/asm/set_memory.h
           cd $GITHUB_WORKSPACE/kernel_workspace/kernel_platform
           patch -p1 < ../../repo/kpm.patch
 
