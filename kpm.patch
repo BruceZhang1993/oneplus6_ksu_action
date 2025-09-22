@@ -1,8 +1,16 @@
 diff --git a/arch/arm64/include/asm/cacheflush.h b/arch/arm64/include/asm/cacheflush.h
-index 9377bec03..a1618b693 100644
+index 9377bec03..f9a1afeab 100644
 --- a/arch/arm64/include/asm/cacheflush.h
 +++ b/arch/arm64/include/asm/cacheflush.h
-@@ -156,9 +156,4 @@ static inline void flush_cache_vunmap(unsigned long start, unsigned long end)
+@@ -20,6 +20,7 @@
+ #define __ASM_CACHEFLUSH_H
+ 
+ #include <linux/mm.h>
++#include <linux/set_memory.h>
+ 
+ /*
+  * This flag is used to indicate that the page pointed to by a pte is clean
+@@ -156,9 +157,4 @@ static inline void flush_cache_vunmap(unsigned long start, unsigned long end)
  {
  }
  
@@ -12,19 +20,6 @@ index 9377bec03..a1618b693 100644
 -int set_memory_nx(unsigned long addr, int numpages);
 -
  #endif
-diff --git a/include/linux/filter.h b/include/linux/filter.h
-index ee4df9426..d236ec4fe 100644
---- a/include/linux/filter.h
-+++ b/include/linux/filter.h
-@@ -17,7 +17,7 @@
- 
- #include <net/sch_generic.h>
- 
--#include <asm/cacheflush.h>
-+#include <linux/set_memory.h>
- 
- #include <uapi/linux/filter.h>
- #include <uapi/linux/bpf.h>
 diff --git a/include/linux/sched.h b/include/linux/sched.h
 index 768183eec..95aac9211 100755
 --- a/include/linux/sched.h
@@ -39,16 +34,3 @@ index 768183eec..95aac9211 100755
  /*
   * WARNING: on x86, 'thread_struct' contains a variable-sized
   * structure.  It *MUST* be at the end of 'task_struct'.
-diff --git a/kernel/module.c b/kernel/module.c
-index f42fbf18c..d462f6beb 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -47,7 +47,7 @@
- #include <linux/mutex.h>
- #include <linux/rculist.h>
- #include <asm/uaccess.h>
--#include <asm/cacheflush.h>
-+#include <linux/set_memory.h>
- #include <asm/mmu_context.h>
- #include <linux/license.h>
- #include <asm/sections.h>
