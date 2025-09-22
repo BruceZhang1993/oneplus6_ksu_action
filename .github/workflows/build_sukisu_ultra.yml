@@ -120,6 +120,7 @@ jobs:
             echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
             echo "CONFIG_KALLSYMS_ALL=y" >> "$CONFIG_FILE"
             echo "CONFIG_ARCH_HAS_SET_MEMORY=y" >> "$CONFIG_FILE"
+            echo "CONFIG_MMU=y" >> "$CONFIG_FILE"
           else
             echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
           fi

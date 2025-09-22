@@ -1,13 +1,14 @@
 diff --git a/arch/Kconfig b/arch/Kconfig
-index 0ecbd6d42..6fc60b732 100644
+index 0ecbd6d42..494dde587 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
-@@ -855,4 +855,8 @@ config VMAP_STACK
+@@ -855,4 +855,9 @@ config VMAP_STACK
  	  the stack to map directly to the KASAN shadow map using a formula
  	  that is incorrect if the stack is in vmalloc space.
  
 +# Select if arch has all set_memory_ro/rw/x/nx() functions in asm/cacheflush.h
 +config ARCH_HAS_SET_MEMORY
++	default y
 +	bool
 +
  source "kernel/gcov/Kconfig"
