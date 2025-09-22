@@ -1,7 +1,16 @@
 diff --git a/arch/arm64/include/asm/cacheflush.h b/arch/arm64/include/asm/cacheflush.h
-index 9377bec03..a1618b693 100644
+index 9377bec03..5be44319f 100644
 --- a/arch/arm64/include/asm/cacheflush.h
 +++ b/arch/arm64/include/asm/cacheflush.h
+@@ -20,7 +20,7 @@
+ #define __ASM_CACHEFLUSH_H
+ 
+ #include <linux/mm.h>
+-
++#include <asm/set_memory.h>
+ /*
+  * This flag is used to indicate that the page pointed to by a pte is clean
+  * and does not require cleaning before returning it to the user.
 @@ -156,9 +156,4 @@ static inline void flush_cache_vunmap(unsigned long start, unsigned long end)
  {
  }
