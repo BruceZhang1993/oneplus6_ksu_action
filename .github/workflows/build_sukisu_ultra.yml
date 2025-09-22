@@ -86,7 +86,6 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform
           wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/include/linux/set_memory.h' -O include/linux/set_memory.h
-          wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/arch/arm/include/asm/set_memory.h' -O arch/arm/include/asm/set_memory.h
           cd $GITHUB_WORKSPACE/kernel_workspace/kernel_platform
           patch -p1 < ../../repo/kpm.patch
 
@@ -119,8 +118,6 @@ jobs:
             echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
             echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
             echo "CONFIG_KALLSYMS_ALL=y" >> "$CONFIG_FILE"
-            echo "CONFIG_ARCH_HAS_SET_MEMORY=y" >> "$CONFIG_FILE"
-            echo "CONFIG_MMU=y" >> "$CONFIG_FILE"
           else
             echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
           fi
