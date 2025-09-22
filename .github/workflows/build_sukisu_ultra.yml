@@ -86,6 +86,7 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform/include/linux
           wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/include/linux/set_memory.h'
+          sed -i 's/static inline int //g' set_memory.h
 
       - name: 应用 SukiSU 修补
         run: |
