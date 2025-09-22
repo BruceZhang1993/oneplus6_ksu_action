@@ -39,3 +39,16 @@ index 768183eec..95aac9211 100755
  /*
   * WARNING: on x86, 'thread_struct' contains a variable-sized
   * structure.  It *MUST* be at the end of 'task_struct'.
+diff --git a/kernel/module.c b/kernel/module.c
+index f42fbf18c..d462f6beb 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -47,7 +47,7 @@
+ #include <linux/mutex.h>
+ #include <linux/rculist.h>
+ #include <asm/uaccess.h>
+-#include <asm/cacheflush.h>
++#include <linux/set_memory.h>
+ #include <asm/mmu_context.h>
+ #include <linux/license.h>
+ #include <asm/sections.h>
