@@ -85,7 +85,7 @@ jobs:
         if: ${{ github.event.inputs.KPM == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/include/linux
-          wget 'https://raw.githubusercontent.com/OnePlusOSS/android_kernel_oneplus_sm8150/refs/heads/oneplus/SM8150_P_9.0/include/linux/set_memory.h'
+          wget 'https://raw.githubusercontent.com/MediaTek-Labs/common-kernel-4.19/refs/heads/master/include/linux/set_memory.h'
 
       - name: 应用 SukiSU 修补
         run: |
@@ -114,6 +114,7 @@ jobs:
           echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
           if [ "${{ github.event.inputs.KPM }}" = "true" ]; then
             echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
           else
             echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
           fi
