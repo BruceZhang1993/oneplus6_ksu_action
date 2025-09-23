@@ -176,7 +176,7 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch_linux
           chmod +x patch_linux
           mv Image.gz-dtb Image.gz
-          gzip -d Image.gz
+          gzip -d Image.gz || true
           ./patch_linux
           rm -f Image
           mv oImage Image
