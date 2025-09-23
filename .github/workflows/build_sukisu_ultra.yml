@@ -180,12 +180,14 @@ jobs:
           ./patch_linux
           rm -f Image
           mv oImage Image
-          gzip Image
-          mv Image.gz Image.gz-dtb
 
       - name: 配置 AnyKernel3
         run: |
-          cp $GITHUB_WORKSPACE/kernel_workspace/kernel_platform/Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
+          if [ "${{ github.event.inputs.KPM }}" = "true" ]; then
+            cp $GITHUB_WORKSPACE/kernel_workspace/kernel_platform/Image $GITHUB_WORKSPACE/AnyKernel3/Image
+          else
+            cp $GITHUB_WORKSPACE/kernel_workspace/kernel_platform/Image.gz-dtb $GITHUB_WORKSPACE/AnyKernel3/Image.gz-dtb
+          fi
           cd $GITHUB_WORKSPACE/AnyKernel3
           rm anykernel.sh
           cp -f ../repo/anykernel.sh .
