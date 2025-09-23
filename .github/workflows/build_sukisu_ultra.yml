@@ -23,7 +23,7 @@ jobs:
           sudo apt-get update
           sudo apt-get upgrade
           sudo apt-get install gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
-          sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs wget
+          sudo apt-get install binutils make python3 libssl-dev build-essential bc bison flex unzip libssl-dev ca-certificates xz-utils mkbootimg cpio device-tree-compiler git git-lfs wget gzip
 
       - name: 设置 ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -175,10 +175,13 @@ jobs:
           cd kernel_workspace/kernel_platform
           curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch_linux
           chmod +x patch_linux
-          cp Image.gz-dtb Image
+          mv Image.gz-dtb Image.gz
+          gzip -d Image.gz
           ./patch_linux
-          rm -f Image.gz-dtb
-          mv oImage Image.gz-dtb
+          rm -f Image
+          mv oImage Image
+          gzip Image
+          mv Image.gz Image.gz-dtb
 
       - name: 配置 AnyKernel3
         run: |
