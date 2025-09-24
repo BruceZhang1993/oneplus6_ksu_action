@@ -1,0 +1,255 @@
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 60ece1b8b..7e7d2133f 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1636,6 +1636,24 @@ config CRYPTO_LZ4
+ 	help
+ 	  This is the LZ4 algorithm.
+ 
++config CRYPTO_LZ4K
++	tristate "LZ4K"
++	select CRYPTO_ALGAPI
++	select CRYPTO_ACOMP2
++	select LZ4K_COMPRESS
++	select LZ4K_DECOMPRESS
++	help
++	  LZ4K compression algorithm
++
++config CRYPTO_LZ4KD
++	tristate "LZ4KD"
++	select CRYPTO_ALGAPI
++	select CRYPTO_ACOMP2
++	select LZ4KD_COMPRESS
++	select LZ4KD_DECOMPRESS
++	help
++	  LZ4KD compression algorithm
++
+ config CRYPTO_LZ4HC
+ 	tristate "LZ4HC compression algorithm"
+ 	select CRYPTO_ALGAPI
+diff --git a/crypto/Makefile b/crypto/Makefile
+index bb20d35a2..2f7b27634 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -120,6 +120,8 @@ obj-$(CONFIG_CRYPTO_AUTHENC) += authenc.o authencesn.o
+ obj-$(CONFIG_CRYPTO_LZO) += lzo.o
+ obj-$(CONFIG_CRYPTO_LZ4) += lz4.o
+ obj-$(CONFIG_CRYPTO_LZ4HC) += lz4hc.o
++obj-$(CONFIG_CRYPTO_LZ4K) += lz4k.o
++obj-$(CONFIG_CRYPTO_LZ4KD) += lz4kd.o
+ obj-$(CONFIG_CRYPTO_842) += 842.o
+ obj-$(CONFIG_CRYPTO_RNG2) += rng.o
+ obj-$(CONFIG_CRYPTO_ANSI_CPRNG) += ansi_cprng.o
+diff --git a/drivers/block/zram/Kconfig b/drivers/block/zram/Kconfig
+index e8f2fa299..d429ba787 100644
+--- a/drivers/block/zram/Kconfig
++++ b/drivers/block/zram/Kconfig
+@@ -1,7 +1,7 @@
+ config ZRAM
+ 	tristate "Compressed RAM block device support"
+ 	depends on BLOCK && SYSFS && ZSMALLOC && CRYPTO
+-	select CRYPTO_LZO
++	depends on CRYPTO_LZO || CRYPTO_ZSTD || CRYPTO_LZ4 || CRYPTO_LZ4HC || CRYPTO_842 || CRYPTO_LZ4K || CRYPTO_LZ4KD || CRYPTO_DEFLATE
+ 	default n
+ 	help
+ 	  Creates virtual block devices called /dev/zramX (X = 0, 1, ...).
+@@ -14,6 +14,61 @@ config ZRAM
+ 
+ 	  See Documentation/blockdev/zram.txt for more information.
+ 
++choice
++	prompt "Default zram compressor"
++	default ZRAM_DEF_COMP_LZORLE
++	depends on ZRAM
++
++config ZRAM_DEF_COMP_LZORLE
++	bool "lzo-rle"
++	depends on CRYPTO_LZO
++
++config ZRAM_DEF_COMP_ZSTD
++	bool "zstd"
++	depends on CRYPTO_ZSTD
++
++config ZRAM_DEF_COMP_LZ4
++	bool "lz4"
++	depends on CRYPTO_LZ4
++
++config ZRAM_DEF_COMP_LZO
++	bool "lzo"
++	depends on CRYPTO_LZO
++
++config ZRAM_DEF_COMP_LZ4HC
++	bool "lz4hc"
++	depends on CRYPTO_LZ4HC
++
++config ZRAM_DEF_COMP_842
++	bool "842"
++	depends on CRYPTO_842
++
++config ZRAM_DEF_COMP_LZ4K
++	bool "lz4k"
++	depends on CRYPTO_LZ4K
++
++config ZRAM_DEF_COMP_LZ4KD
++	bool "lz4kd"
++	depends on CRYPTO_LZ4KD
++
++config ZRAM_DEF_COMP_DEFLATE
++	bool "deflate"
++	depends on CRYPTO_DEFLATE
++
++endchoice
++
++config ZRAM_DEF_COMP
++	string
++	default "lzo-rle" if ZRAM_DEF_COMP_LZORLE
++	default "zstd" if ZRAM_DEF_COMP_ZSTD
++	default "lz4" if ZRAM_DEF_COMP_LZ4
++	default "lzo" if ZRAM_DEF_COMP_LZO
++	default "lz4hc" if ZRAM_DEF_COMP_LZ4HC
++	default "842" if ZRAM_DEF_COMP_842
++	default "lz4k" if ZRAM_DEF_COMP_LZ4K
++	default "lz4kd" if ZRAM_DEF_COMP_LZ4KD
++	default "deflate" if ZRAM_DEF_COMP_DEFLATE
++
+ config ZRAM_WRITEBACK
+        bool "Write back incompressible or idle page to backing device"
+        depends on ZRAM
+diff --git a/drivers/block/zram/zcomp.c b/drivers/block/zram/zcomp.c
+index c084a7f97..a6adc0f56 100644
+--- a/drivers/block/zram/zcomp.c
++++ b/drivers/block/zram/zcomp.c
+@@ -19,7 +19,9 @@
+ #include "zcomp.h"
+ 
+ static const char * const backends[] = {
++#if IS_ENABLED(CONFIG_CRYPTO_LZO)
+ 	"lzo",
++#endif
+ #if IS_ENABLED(CONFIG_CRYPTO_LZ4)
+ 	"lz4",
+ #endif
+@@ -29,6 +31,15 @@ static const char * const backends[] = {
+ #if IS_ENABLED(CONFIG_CRYPTO_LZ4HC)
+ 	"lz4hc",
+ #endif
++#if IS_ENABLED(CONFIG_CRYPTO_LZ4K)
++	"lz4k",
++#endif
++#if IS_ENABLED(CONFIG_CRYPTO_LZ4KD)
++	"lz4kd",
++#endif
++#if IS_ENABLED(CONFIG_CRYPTO_DEFLATE)
++	"deflate",
++#endif
+ #if IS_ENABLED(CONFIG_CRYPTO_842)
+ 	"842",
+ #endif
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index d11775a04..ef90600ad 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -40,7 +40,7 @@ static DEFINE_IDR(zram_index_idr);
+ static DEFINE_MUTEX(zram_index_mutex);
+ 
+ static int zram_major;
+-static const char *default_compressor = "lzo";
++static const char *default_compressor = CONFIG_ZRAM_DEF_COMP;
+ 
+ /* Module params (documentation at end) */
+ static unsigned int num_devices = 1;
+diff --git a/kernel/module.c b/kernel/module.c
+index f42fbf18c..ca8a0fce6 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -1308,9 +1308,7 @@ static int check_version(Elf_Shdr *sechdrs,
+ 	return 1;
+ 
+ bad_version:
+-	pr_warn("%s: disagrees about version of symbol %s\n",
+-	       mod->name, symname);
+-	return 0;
++	return 1;
+ }
+ 
+ static inline int check_modstruct_version(Elf_Shdr *sechdrs,
+@@ -3261,13 +3259,27 @@ int __weak module_frob_arch_sections(Elf_Ehdr *hdr,
+ 
+ /* module_blacklist is a comma-separated list of module names */
+ static char *module_blacklist;
++
++static char *custom_module_blacklist[] = {
++#if IS_BUILTIN(CONFIG_CRYPTO_LZO)
++    "lzo", "lzo_rle",
++#endif
++#if IS_BUILTIN(CONFIG_ZRAM)
++    "zram",
++#endif
++#if IS_BUILTIN(CONFIG_ZSMALLOC)
++    "zsmalloc",
++#endif
++};
++
+ static bool blacklisted(char *module_name)
+ {
+ 	const char *p;
+ 	size_t len;
++	int i;
+ 
+ 	if (!module_blacklist)
+-		return false;
++		goto custom_blacklist;
+ 
+ 	for (p = module_blacklist; *p; p += len) {
+ 		len = strcspn(p, ",");
+@@ -3276,6 +3288,12 @@ static bool blacklisted(char *module_name)
+ 		if (p[len] == ',')
+ 			len++;
+ 	}
++
++custom_blacklist:
++	for (i = 0; i < ARRAY_SIZE(custom_module_blacklist); i++)
++		if (!strcmp(module_name, custom_module_blacklist[i]))
++			return true;
++
+ 	return false;
+ }
+ core_param(module_blacklist, module_blacklist, charp, 0400);
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 546cfb346..737b9f4d5 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -241,6 +241,18 @@ config LZ4HC_COMPRESS
+ config LZ4_DECOMPRESS
+ 	tristate
+ 
++config LZ4K_COMPRESS
++	tristate
++
++config LZ4K_DECOMPRESS
++	tristate
++
++config LZ4KD_COMPRESS
++	tristate
++
++config LZ4KD_DECOMPRESS
++	tristate
++
+ config ZSTD_COMPRESS
+ 	select XXHASH
+ 	tristate
+diff --git a/lib/Makefile b/lib/Makefile
+index c1b580c11..7d0675fe5 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -111,6 +111,10 @@ obj-$(CONFIG_LZO_DECOMPRESS) += lzo/
+ obj-$(CONFIG_LZ4_COMPRESS) += lz4/
+ obj-$(CONFIG_LZ4HC_COMPRESS) += lz4/
+ obj-$(CONFIG_LZ4_DECOMPRESS) += lz4/
++obj-$(CONFIG_LZ4K_COMPRESS) += lz4k/
++obj-$(CONFIG_LZ4K_DECOMPRESS) += lz4k/
++obj-$(CONFIG_LZ4KD_COMPRESS) += lz4kd/
++obj-$(CONFIG_LZ4KD_DECOMPRESS) += lz4kd/
+ obj-$(CONFIG_ZSTD_COMPRESS) += zstd/
+ obj-$(CONFIG_ZSTD_DECOMPRESS) += zstd/
+ obj-$(CONFIG_XZ_DEC) += xz/
