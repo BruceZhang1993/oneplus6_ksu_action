@@ -13,6 +13,8 @@ jobs:
         ZRAM: [true, false]
       fail-fast: false
 
+    name: "Build Kernel (SuSFS: ${{ matrix.SUSFS }}, KPM: ${{ matrix.KPM }}, ZRAM: ${{ matrix.ZRAM }})"
+
     steps:
       - name: 配置 Git
         run: |
