@@ -8,12 +8,12 @@ jobs:
 
     strategy:
       matrix:
-        SUSFS: [true, false]
-        KPM: [true, false]
-        ZRAM: [true, false]
+        SUSFS: ["true", "false"]
+        KPM: ["true", "false"]
+        ZRAM: ["true", "false"]
       fail-fast: false
 
-    name: "Build Kernel (SuSFS: ${{ matrix.SUSFS }}, KPM: ${{ matrix.KPM }}, ZRAM: ${{ matrix.ZRAM }})"
+    name: "Build (SuSFS: ${{ matrix.SUSFS }}, KPM: ${{ matrix.KPM }}, ZRAM: ${{ matrix.ZRAM }})"
 
     steps:
       - name: 配置 Git
@@ -221,21 +221,21 @@ jobs:
           KSU_VERSION=$(echo $KSU_VERSION)
           DATE=$(date +'%y%m%d')
           if [ "${{ matrix.SUSFS }}" = "true" ]; then
-            SUSFS_TAG="SuSFS"
+            SUSFS_TAG="_SuSFS"
           else
-            SUSFS_TAG="NoSuSFS"
+            SUSFS_TAG=""
           fi
           if [ "${{ matrix.KPM }}" = "true" ]; then
-            KPM_TAG="KPM"
+            KPM_TAG="_KPM"
           else
-            KPM_TAG="NoKPM"
+            KPM_TAG=""
           fi
           if [ "${{ matrix.ZRAM }}" = "true" ]; then
-            ZRAM_TAG="ZRAM"
+            ZRAM_TAG="_ZRAM"
           else
-            ZRAM_TAG="NoZRAM"
+            ZRAM_TAG=""
           fi
-          PACKAGE_NAME="Lineage_OnePlus6_SukiSU_${KSU_VERSION}_${SUSFS_TAG}_${KPM_TAG}_${ZRAM_TAG}_${DATE}"
+          PACKAGE_NAME="Lineage_OnePlus6_SukiSU_${KSU_VERSION}${SUSFS_TAG}${KPM_TAG}${ZRAM_TAG}_${DATE}"
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
         env:
           KSU_VERSION: ${{ env.KSU_VERSION }}
