@@ -11,6 +11,7 @@ jobs:
         SUSFS: [true, false]
         KPM: [true, false]
         ZRAM: [true, false]
+      fail-fast: false
 
     steps:
       - name: 配置 Git
