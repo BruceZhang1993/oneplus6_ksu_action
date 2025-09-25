@@ -114,11 +114,10 @@ jobs:
         if: ${{ github.event.inputs.ZRAM == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform
-          cp -r ../SukiSU_patch/other/zram/lz4k/include/linux/* ./include/linux
-          cp -r ../SukiSU_patch/other/zram/lz4k/lib/* ./lib
-          cp -r ../SukiSU_patch/other/zram/lz4k/crypto/* ./crypto
-          cp -r ../SukiSU_patch/other/zram/lz4k_oplus ./lib/
-          patch -p1 < ../../repo/zram.patch
+          cp -r ../../repo/zram/include/* ./include/linux/
+          cp -r ../../repo/zram/crypto/* ./crypto/
+          cp -r ../../repo/zram/lib/lz4kd/ ./lib/
+          patch -p1 < ../../repo/zram/zram.patch
 
       # 配置信息
       - name: 增加内核配置
