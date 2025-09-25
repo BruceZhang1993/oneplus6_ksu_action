@@ -20,7 +20,7 @@
 
 - [x] 移除内核版本号 -dirty 后缀
 - [x] 增加应用隐藏补丁
-- [ ] 增加 zram 算法补丁
+- [x] 增加 zram lz4kd 算法
 - [x] 支持 GitHub Actions 编译选项
 
 ### 参考
@@ -32,3 +32,4 @@
 - [SuSFS 4.9 内核修补](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.9?ref_type=heads) 用于参考 SuSFS 内核修补
 - [Elixir Cross Referencer](https://elixir.bootlin.com/linux/v4.19.325/C/ident/set_memory_ro) 用于反向移植 set_memory.h 以支持 KPM
 - [MediaTek-Labs/common-kernel-4.19](https://github.com/MediaTek-Labs/common-kernel-4.19) 用于反向移植 set_memory.h 以支持 KPM
+- LZ4KD compression algorithm from HUAWEI
