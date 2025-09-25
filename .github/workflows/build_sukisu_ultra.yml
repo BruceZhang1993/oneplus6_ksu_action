@@ -2,6 +2,11 @@ name: Build LineageOS Kernel with SukiSU Ultra
 on:
   workflow_dispatch:
     inputs:
+      SUSFS:
+        description: '启用SUSFS'
+        required: true
+        default: true
+        type: boolean
       KPM:
         description: '启用KPM'
         required: true
@@ -63,6 +68,7 @@ jobs:
           cd ./KernelSU
           KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+          echo "KSU_VERSION=$KSU_VERSION" >> $GITHUB_ENV
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
 
@@ -73,6 +79,7 @@ jobs:
           patch -p1 < ../../repo/selinux-fix.patch
 
       - name: 应用 SUSFS 补丁
+        if: ${{ github.event.inputs.SUSFS == 'true' }}
         run: |
           cd kernel_workspace
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.9
@@ -95,6 +102,7 @@ jobs:
           patch -p1 < ../../repo/kpm.patch
 
       - name: 应用 SukiSU 修补
+        if: ${{ github.event.inputs.SUSFS == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/KernelSU
           echo "== 正在应用 SukiSU 修补 =="
@@ -145,22 +153,24 @@ jobs:
             echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
             echo "CONFIG_ZRAM_DEF_COMP_LZ4KD=y" >> "$CONFIG_FILE"
           fi
-          # SUSFS config
-          echo "CONFIG_KSU_SUSFS=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> "$CONFIG_FILE"
-          echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> "$CONFIG_FILE"
+          if [ "${{ github.event.inputs.SUSFS }}" = "true" ]; then
+            # SUSFS config
+            echo "CONFIG_KSU_SUSFS=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> "$CONFIG_FILE"
+            echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> "$CONFIG_FILE"
+          fi
 
       - name: 下载 clang 编译器
         run: |
@@ -213,8 +223,34 @@ jobs:
           rm anykernel.sh
           cp -f ../repo/anykernel.sh .
 
+      - name: 生成包名
+        run: |
+          KSU_VERSION=$(echo $KSU_VERSION)
+          DATE=$(date +'%y%m%d')
+          if [ "${{ github.event.inputs.SUSFS }}" = "true" ]; then
+            SUSFS_TAG="SUSFS"
+          else
+            SUSFS_TAG="NoSUSFS"
+          fi
+          if [ "${{ github.event.inputs.KPM }}" = "true" ]; then
+            KPM_TAG="KPM"
+          else
+            KPM_TAG="NoKPM"
+          fi
+          if [ "${{ github.event.inputs.ZRAM }}" = "true" ]; then
+            ZRAM_TAG="ZRAM"
+          else
+            ZRAM_TAG="NoZRAM"
+          fi
+          PACKAGE_NAME="Lineage_OnePlus6_SukiSU_${KSU_VERSION}_${SUSFS_TAG}_${KPM_TAG}_${ZRAM_TAG}_${DATE}"
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+        env:
+          KSU_VERSION: ${{ env.KSU_VERSION }}
+
       - name: 上传内核包
         uses: actions/upload-artifact@v4
         with:
-          name: AnyKernel3_Lineage_OnePlus6_SukiSU
+          name: ${{ env.PACKAGE_NAME }}
           path: ./AnyKernel3/*
+        env:
+          PACKAGE_NAME: ${{ env.PACKAGE_NAME }}
