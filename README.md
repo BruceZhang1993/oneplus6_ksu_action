@@ -4,6 +4,10 @@
 
 基于 LineageOS 22.2 OnePlus6 内核源码编译
 
+## Note
+
+Use at your own risk! 使用前请用 KernelFlasher 类似工具备份内核
+
 ## 支持特性  
 
 ### KernelSU
